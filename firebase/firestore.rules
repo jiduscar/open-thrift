@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// The app can ask, only the server can grant: balances, unlocks,
+// transactions and token costs are written by Cloud Functions only
+// (the Admin SDK bypasses these rules).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isUser(uid) { return signedIn() && request.auth.uid == uid; }
+    function isAdmin() { return signedIn() && request.auth.token.admin == true; }
+    function unchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    match /users/{uid} {
+      allow read: if isUser(uid) || isAdmin();
+      allow create: if isUser(uid)
+        && !request.resource.data.keys().hasAny(['tokenBalance', 'tokenExpiry', 'role']);
+      allow update: if isUser(uid) && unchanged(['tokenBalance', 'tokenExpiry', 'role']);
+
+      // Seller phone/email: hidden from other users until a paid unlock,
+      // which a Cloud Function performs.
+      match /private/{doc} {
+        allow read, write: if isUser(uid);
+      }
+      match /favorites/{productId} {
+        allow read, write: if isUser(uid);
+      }
+      match /passes/{productId} {
+        allow read, write: if isUser(uid);
+      }
+      match /unlocks/{productId} {
+        allow read: if isUser(uid);
+        allow write: if false;
+      }
+      match /notifications/{id} {
+        allow read: if isUser(uid);
+        allow update: if isUser(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow create, delete: if false;
+      }
+    }
+
+    match /products/{productId} {
+      allow read: if signedIn()
+        && (resource.data.status == 'online' || resource.data.sellerId == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.status in ['online', 'offline']
+        && request.resource.data.price is number && request.resource.data.price >= 0
+        && !request.resource.data.keys().hasAny(['tokenCost']);
+      allow update: if signedIn()
+        && resource.data.sellerId == request.auth.uid
+        && unchanged(['sellerId', 'tokenCost', 'createdAt'])
+        && request.resource.data.status in ['online', 'offline'];
+      allow delete: if (signedIn() && resource.data.sellerId == request.auth.uid) || isAdmin();
+    }
+
+    match /transactions/{id} {
+      allow read: if (signedIn() && resource.data.uid == request.auth.uid) || isAdmin();
+      allow write: if false;
+    }
+
+    match /supportTickets/{id} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update: if isAdmin();
+    }
+
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
