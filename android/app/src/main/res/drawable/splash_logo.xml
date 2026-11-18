@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- White rounded tile with a purple shopping bag -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M28,0h64a28,28 0,0 1,28 28v64a28,28 0,0 1,-28 28h-64a28,28 0,0 1,-28 -28v-64a28,28 0,0 1,28 -28z" />
+    <path android:fillColor="#8E2DE2"
+        android:pathData="M36,48h48a4,4 0,0 1,4 4v26a8,8 0,0 1,-8 8h-40a8,8 0,0 1,-8 -8v-26a4,4 0,0 1,4 -4z" />
+    <path android:strokeColor="#8E2DE2" android:strokeWidth="6" android:fillColor="#00000000"
+        android:pathData="M48,50v-8a12,12 0,0 1,24 0v8" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="5" android:fillColor="#00000000"
+        android:strokeLineCap="round"
+        android:pathData="M50,56v4a10,10 0,0 0,20 0v-4" />
+</vector>

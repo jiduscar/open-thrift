@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Product images: products/{uid}/{productId}/{file}
+    match /products/{uid}/{productId}/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && (request.resource == null
+            || (request.resource.size < 5 * 1024 * 1024
+                && request.resource.contentType.matches('image/.*')));
+    }
+    match /avatars/{uid}/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && (request.resource == null
+            || (request.resource.size < 2 * 1024 * 1024
+                && request.resource.contentType.matches('image/.*')));
+    }
+  }
+}
